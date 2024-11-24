@@ -12,7 +12,7 @@ from math import cos, sin
 
 class srdfGroupStates(Node):
     def __init__(self, ros_package, srd_file_name, group_name):
-        super().__init__('srdf_joint_values')
+        super().__init__('srdf_group_states')
         self.groupname = group_name
 
         package_path = get_package_share_directory(ros_package)
