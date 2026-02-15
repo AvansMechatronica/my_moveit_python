@@ -122,14 +122,16 @@ class MovegroupHelper(Node):
             self.get_logger().info("Result status: " + str(future.result().status))
             self.get_logger().info("Result error code: " + str(future.result().result.error_code))
 
-    def move_to_pose(self, position, quat_xyzw):
+    def move_to_pose(self, position, quat_xyzw, cartesian=True, cartesian_max_step=0.0025, cartesian_fraction_threshold=0.0, cartesian_jump_threshold=0.0, cartesian_avoid_collisions=False):
         self.get_logger().info(f"Moving to {{position: {list(position)}, quat_xyzw: {list(quat_xyzw)}}}")
         self.moveit2.move_to_pose(
             position=position,
             quat_xyzw=quat_xyzw,
-            cartesian=self.cartesian,
-            cartesian_max_step=self.cartesian_max_step,
-            cartesian_fraction_threshold=self.cartesian_fraction_threshold,
+            cartesian=cartesian,
+            cartesian_max_step=cartesian_max_step,
+            cartesian_fraction_threshold=cartesian_fraction_threshold,
+            cartesian_jump_threshold=cartesian_jump_threshold,
+            cartesian_avoid_collisions=cartesian_avoid_collisions,
         )
         if self.synchronous:
             # Note: the same functionality can be achieved by setting
