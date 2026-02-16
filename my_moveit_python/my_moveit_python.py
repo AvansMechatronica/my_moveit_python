@@ -84,8 +84,37 @@ class MovegroupHelper(Node):
         self.cartesian = True
         self.cartesian_max_step = 0.0025
         self.cartesian_fraction_threshold = 0.0
-        self.cartesian_jump_threshold = 0.0
-        self.cartesian_avoid_collisions = False
+
+    def wait_for_moveit_services(self, timeout_sec=10.0):
+        """Wait for MoveIt2 services to become available."""
+        import time
+        start_time = time.time()
+        
+        # Access the private service clients from MoveIt2
+        plan_service = self.moveit2._plan_kinematic_path_service
+        cartesian_service = self.moveit2._plan_cartesian_path_service
+        
+        self.get_logger().info("Waiting for MoveIt2 services to become available...")
+        
+        # Wait for plan_kinematic_path service
+        while not plan_service.service_is_ready():
+            if time.time() - start_time > timeout_sec:
+                self.get_logger().error(f"Timeout waiting for service '{plan_service.srv_name}'")
+                return False
+            time.sleep(0.1)
+        
+        self.get_logger().info(f"Service '{plan_service.srv_name}' is ready")
+        
+        # Wait for compute_cartesian_path service
+        while not cartesian_service.service_is_ready():
+            if time.time() - start_time > timeout_sec:
+                self.get_logger().error(f"Timeout waiting for service '{cartesian_service.srv_name}'")
+                return False
+            time.sleep(0.1)
+        
+        self.get_logger().info(f"Service '{cartesian_service.srv_name}' is ready")
+        self.get_logger().info("All MoveIt2 services are ready!")
+        return True
 
     def move_to_configuration(self, joint_values):
         self.get_logger().info(f"Moving to {{joint_positions: {list(joint_values)}}}")
@@ -122,7 +151,7 @@ class MovegroupHelper(Node):
             self.get_logger().info("Result status: " + str(future.result().status))
             self.get_logger().info("Result error code: " + str(future.result().result.error_code))
 
-    def move_to_pose(self, position, quat_xyzw, cartesian=True, cartesian_max_step=0.0025, cartesian_fraction_threshold=0.0, cartesian_jump_threshold=0.0, cartesian_avoid_collisions=False):
+    def move_to_pose(self, position, quat_xyzw, cartesian=True, cartesian_max_step=0.0025, cartesian_fraction_threshold=0.0):
         self.get_logger().info(f"Moving to {{position: {list(position)}, quat_xyzw: {list(quat_xyzw)}}}")
         self.moveit2.move_to_pose(
             position=position,
@@ -130,8 +159,6 @@ class MovegroupHelper(Node):
             cartesian=cartesian,
             cartesian_max_step=cartesian_max_step,
             cartesian_fraction_threshold=cartesian_fraction_threshold,
-            cartesian_jump_threshold=cartesian_jump_threshold,
-            cartesian_avoid_collisions=cartesian_avoid_collisions,
         )
         if self.synchronous:
             # Note: the same functionality can be achieved by setting
